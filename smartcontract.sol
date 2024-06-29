@@ -1,47 +1,57 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier:MIT
 pragma solidity 0.8.18;
-
 contract MyToken {
-
-    string public name = "Metacraft";
-    string public symbol = "MTC";
-    uint256 public totalSupply = 0;
-    address public owner;
-
-    event Mint(address indexed to, uint256 amount);
-    event Burn(address indexed from, uint256 amount);
-    event Transfer(address indexed from, address indexed to, uint256 amount);
-
-    error InsufficientBalance(uint256 available, uint256 requested);
-
-    mapping(address => uint256) public balance;
-
     constructor() {
         owner = msg.sender;
     }
 
-    modifier onlyOwner {
-        require(msg.sender == owner, "Caller is not the owner");
-        _;
+    // public variables here
+    string public name = "Metacraft";
+    string public symbol = "MTC";
+    uint public totalsupply = 0;
+    address public owner;
+
+    // emits Events
+    event Mint(address indexed to, uint amount);
+    event Burn(address indexed from, uint amount);
+    event Transfer(address indexed from, address indexed to, uint amount);
+
+    // errors
+    error InsufficientBalance(uint balance, uint withdrawAmount);
+
+    // mapping variable here
+    mapping(address => uint) public balances;
+
+    //modifiers
+    modifier onlyOwner{
+    assert(msg.sender == owner);
+    _;
     }
 
-    function mint(address _account, uint256 _value) public onlyOwner {
-        totalSupply += _value;
-        balance[_account] += _value;
-        emit Mint(_account, _value);
+    // mint function
+    function mint(address _address, uint _value) public onlyOwner{
+    totalsupply += _value;
+    balances [ _address] += _value;
+    emit Mint( _address, _value);
     }
 
-    function burn(address _account, uint256 _value) public onlyOwner {
-        require(balance[_account] >= _value, "Insufficient balance to burn");
-        totalSupply -= _value;
-        balance[_account] -= _value;
-        emit Burn(_account, _value);
+// burn function
+
+    function burn (address _address, uint _value) public onlyOwner{
+        if(balances[_address] < _value){
+            revert InsufficientBalance({balance: balances[_address], withdrawAmount :_value}) ;
+        }else{
+            totalsupply-=_value;
+            balances [_address] -= _value;
+            emit Burn(_address, _value);
+        }
+    }
+    function transfer(address _reciver,uint _value ) public{
+        require(balances[msg.sender]>=_value, "Account balance must be greater then transfered value! " ) ;
+        balances [msg. sender]-=_value;
+        balances [_reciver] += _value;
+        emit Transfer(msg.sender, _reciver, _value);
     }
 
-    function transferTokens(address _receiver, uint256 _value) public {
-        require(balance[msg.sender] >= _value, "Insufficient balance for transfer");
-        balance[msg.sender] -= _value;
-        balance[_receiver] += _value;
-        emit Transfer(msg.sender, _receiver, _value);
-    }
 }
+    
